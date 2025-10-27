@@ -1112,7 +1112,7 @@ function classifyChemistry(analysis) {
             emoji: '💞',
             label: '"Romantic Spark"',
             description: 'Flirty or affectionate, moderate consistency',
-            condition: avgSentiment > 0.15 && avgMessagesPerUser > 20 && avgResponseTime < 3600000 // >0.3 sentiment, >20 msgs/user, <2hr response, >20% positive words
+            condition: avgSentiment > 0.15 && avgMessagesPerUser > 20 && avgResponseTime < 500000 // >0.3 sentiment, >20 msgs/user, <2hr response, >20% positive words
         },
         {
             emoji: '👀',
