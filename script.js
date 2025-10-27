@@ -75,23 +75,37 @@ function handleFileSelect(file) {
     fileName.textContent = file.name;
     fileName.classList.remove('hidden');
 
-    // Read the file locally for analysis
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const content = e.target.result;
-        const platform = platformSelect.value;
+    // Upload to server
+    uploadFile(file);
+}
 
-        // Parse the chat data
-        chatData = parseChat(content, platform);
+async function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
 
-        // Enable analyze button
-        analyzeBtn.disabled = false;
+    try {
+        const response = await fetch('/api/files/upload', {
+            method: 'POST',
+            body: formData
+        });
 
-        // Store in localStorage for persistence
-        localStorage.setItem('chatData', JSON.stringify(chatData));
-    };
-
-    reader.readAsText(file);
+        if (response.ok) {
+            const uploadedFile = await response.json();
+            alert('File uploaded successfully!');
+            // Store the uploaded file ID for analysis
+            localStorage.setItem('uploadedFileId', uploadedFile._id);
+            // Parse and prepare for analysis
+            const platform = platformSelect.value;
+            chatData = parseChat(uploadedFile.content, platform);
+            analyzeBtn.disabled = false;
+            localStorage.setItem('chatData', JSON.stringify(chatData));
+        } else {
+            alert('Failed to upload file.');
+        }
+    } catch (error) {
+        console.error('Upload error:', error);
+        alert('Error uploading file.');
+    }
 }
 
 function parseChat(content, platform) {
