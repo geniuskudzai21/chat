@@ -1,13 +1,13 @@
 :root {
-    --primary: #00ff00; /* Bright Lime */
+    --primary: #007bff; /* Intuitive Blue */
     --secondary: #ffffff; /* White */
     --accent: #000000; /* Black */
-    --light: #f0f0f0; /* Light Gray */
-    --dark: #333333; /* Dark Gray */
-    --success: #00ff00; /* Lime */
-    --warning: #ffff00; /* Bright Yellow (for contrast) */
-    --danger: #ff0000; /* Bright Red */
-    --border-color: #0000ff; /* Blue */
+    --light: #f8f9fa; /* Light Gray */
+    --dark: #495057; /* Dark Gray */
+    --success: #28a745; /* Green */
+    --warning: #ffc107; /* Yellow */
+    --danger: #dc3545; /* Red */
+    --border-color: #dee2e6; /* Light Border */
 }
 .card {
     transition: all 0.3s ease;
