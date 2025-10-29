@@ -23,21 +23,34 @@ function parseDateTime(dateStr, timeStr, platform) {
     let day, month, year;
 
     if (platform === 'whatsapp' || platform === 'facebook') {
-        if (dateParts[0].length === 4) {
-            // YYYY/MM/DD
+        // Check for yy/mm/dd format (first part >=20, all 2 digits)
+        if (dateParts.length === 3 &&
+            dateParts[0].length === 2 &&
+            dateParts[1].length === 2 &&
+            dateParts[2].length === 2 &&
+            parseInt(dateParts[0]) >= 20) {
+            // yy/mm/dd
             year = parseInt(dateParts[0]);
             month = parseInt(dateParts[1]) - 1;
             day = parseInt(dateParts[2]);
-        } else if (parseInt(dateParts[0]) > 12) {
-            // MM/DD/YY
-            day = parseInt(dateParts[1]);
-            month = parseInt(dateParts[0]) - 1;
-            year = parseInt(dateParts[2]);
         } else {
-            // DD/MM/YY
-            day = parseInt(dateParts[0]);
-            month = parseInt(dateParts[1]) - 1;
-            year = parseInt(dateParts[2]);
+            // Existing logic for other formats
+            if (dateParts[0].length === 4) {
+                // YYYY/MM/DD
+                year = parseInt(dateParts[0]);
+                month = parseInt(dateParts[1]) - 1;
+                day = parseInt(dateParts[2]);
+            } else if (parseInt(dateParts[0]) > 12) {
+                // MM/DD/YY
+                day = parseInt(dateParts[1]);
+                month = parseInt(dateParts[0]) - 1;
+                year = parseInt(dateParts[2]);
+            } else {
+                // DD/MM/YY
+                day = parseInt(dateParts[0]);
+                month = parseInt(dateParts[1]) - 1;
+                year = parseInt(dateParts[2]);
+            }
         }
     } else if (platform === 'telegram') {
         if (dateParts[0].length === 4) {
@@ -68,6 +81,7 @@ const tests = [
     { dateStr: '12/05/23', timeStr: '10:30', platform: 'whatsapp', expected: '2023-05-12T08:30:00.000Z' }, // DD/MM/YY -> May 12, 2023
     { dateStr: '05/12/23', timeStr: '10:30', platform: 'whatsapp', expected: '2023-12-05T08:30:00.000Z' }, // DD/MM/YY -> Dec 5, 2023
     { dateStr: '2023/05/12', timeStr: '10:30', platform: 'whatsapp', expected: '2023-05-12T08:30:00.000Z' }, // YYYY/MM/DD
+    { dateStr: '23/05/12', timeStr: '10:30', platform: 'whatsapp', expected: '2023-05-12T08:30:00.000Z' }, // yy/mm/dd -> May 12, 2023
     // Telegram
     { dateStr: '12.05.23', timeStr: '10:30', platform: 'telegram', expected: '2023-05-12T08:30:00.000Z' }, // DD.MM.YY
     { dateStr: '2023.05.12', timeStr: '10:30', platform: 'telegram', expected: '2023-05-12T08:30:00.000Z' }, // YYYY.MM.DD
@@ -75,6 +89,7 @@ const tests = [
     { dateStr: '12/05/23', timeStr: '10:30', platform: 'facebook', expected: '2023-05-12T08:30:00.000Z' },
     { dateStr: '05/12/23', timeStr: '10:30', platform: 'facebook', expected: '2023-12-05T08:30:00.000Z' },
     { dateStr: '2023/05/12', timeStr: '10:30', platform: 'facebook', expected: '2023-05-12T08:30:00.000Z' },
+    { dateStr: '23/05/12', timeStr: '10:30', platform: 'facebook', expected: '2023-05-12T08:30:00.000Z' }, // yy/mm/dd -> May 12, 2023
     // Edge cases
     { dateStr: '01/01/24', timeStr: '00:00', platform: 'whatsapp', expected: '2023-12-31T22:00:00.000Z' }, // New year
     { dateStr: '31.12.22', timeStr: '23:59', platform: 'telegram', expected: '2022-12-31T21:59:00.000Z' }, // End of year

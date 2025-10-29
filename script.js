@@ -124,17 +124,30 @@ function parseChat(content, platform) {
         let line = lines[i].trim();
         if (!line) continue;
         
-        let match = null;
-
-        if (platform === 'whatsapp') {
-            match = line.match(patterns.whatsapp) || line.match(patterns.whatsapp2);
-        } else if (platform === 'telegram') {
-            match = line.match(patterns.telegram);
-        } else if (platform === 'facebook') {
-            match = line.match(patterns.facebook);
+    let match = null;
+    if (platform === 'whatsapp') {
+        const systemMatch = line.match(/^(\d{1,2}\/\d{1,2}\/\d{2,4}),? (\d{1,2}:\d{2}) - (.+)$/);
+        if (systemMatch) {
+            let dateStr, timeStr, text;
+            [, dateStr, timeStr, text] = systemMatch;
+            const dateTime = parseDateTime(dateStr, timeStr, platform);
+            messages.push({
+                date: dateTime,
+                sender: 'System',
+                message: text.trim(),
+                timestamp: dateTime.getTime()
+            });
+            currentDate = dateTime;
+            continue;
         }
-        
-        if (match) {
+        match = line.match(patterns.whatsapp) || line.match(patterns.whatsapp2);
+    } else if (platform === 'telegram') {
+        match = line.match(patterns.telegram);
+    } else if (platform === 'facebook') {
+        match = line.match(patterns.facebook);
+    }
+
+    if (match) {
             let dateStr, timeStr, sender, text;
             
             if (patterns.whatsapp2.test(line)) {
@@ -182,21 +195,34 @@ function parseDateTime(dateStr, timeStr, platform) {
     let day, month, year;
 
     if (platform === 'whatsapp' || platform === 'facebook') {
-        if (dateParts[0].length === 4) {
-            // YYYY/MM/DD
+        // Check for yy/mm/dd format (first part >=20, all 2 digits)
+        if (dateParts.length === 3 &&
+            dateParts[0].length === 2 &&
+            dateParts[1].length === 2 &&
+            dateParts[2].length === 2 &&
+            parseInt(dateParts[0]) >= 20) {
+            // yy/mm/dd
             year = parseInt(dateParts[0]);
             month = parseInt(dateParts[1]) - 1;
             day = parseInt(dateParts[2]);
-        } else if (parseInt(dateParts[0]) > 12) {
-            // MM/DD/YY
-            day = parseInt(dateParts[1]);
-            month = parseInt(dateParts[0]) - 1;
-            year = parseInt(dateParts[2]);
         } else {
-            // DD/MM/YY
-            day = parseInt(dateParts[0]);
-            month = parseInt(dateParts[1]) - 1;
-            year = parseInt(dateParts[2]);
+            // Existing logic for other formats
+            if (dateParts[0].length === 4) {
+                // YYYY/MM/DD
+                year = parseInt(dateParts[0]);
+                month = parseInt(dateParts[1]) - 1;
+                day = parseInt(dateParts[2]);
+            } else if (parseInt(dateParts[0]) > 12) {
+                // MM/DD/YY
+                day = parseInt(dateParts[1]);
+                month = parseInt(dateParts[0]) - 1;
+                year = parseInt(dateParts[2]);
+            } else {
+                // DD/MM/YY
+                day = parseInt(dateParts[0]);
+                month = parseInt(dateParts[1]) - 1;
+                year = parseInt(dateParts[2]);
+            }
         }
     } else if (platform === 'telegram') {
         if (dateParts[0].length === 4) {
