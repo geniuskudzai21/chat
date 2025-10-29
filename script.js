@@ -267,7 +267,6 @@ function analyzeChat() {
             resultsSection.scrollIntoView({ behavior: 'smooth' });
         } catch (error) {
             console.error("Error during analysis:", error);
-            alert("An error occurred during analysis. Please try again.");
         } finally {
             // Always reset button state
             analyzeBtn.innerHTML = '<i class="fas fa-chart-line mr-2"></i> Analyze Chat';
