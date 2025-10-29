@@ -182,28 +182,34 @@ function parseDateTime(dateStr, timeStr, platform) {
     let day, month, year;
 
     if (platform === 'whatsapp' || platform === 'facebook') {
-        if (dateParts[0].length == 4) {
-            // yyyy/mm/dd
+        if (dateParts[0].length === 4) {
+            // YYYY/MM/DD
+            year = parseInt(dateParts[0]);
+            month = parseInt(dateParts[1]) - 1;
+            day = parseInt(dateParts[2]);
+        } else if (parseInt(dateParts[0]) > 12) {
+            // MM/DD/YY
+            day = parseInt(dateParts[1]);
+            month = parseInt(dateParts[0]) - 1;
+            year = parseInt(dateParts[2]);
+        } else {
+            // DD/MM/YY
+            day = parseInt(dateParts[0]);
+            month = parseInt(dateParts[1]) - 1;
+            year = parseInt(dateParts[2]);
+        }
+    } else if (platform === 'telegram') {
+        if (dateParts[0].length === 4) {
+            // YYYY.MM.DD
             year = parseInt(dateParts[0]);
             month = parseInt(dateParts[1]) - 1;
             day = parseInt(dateParts[2]);
         } else {
-            if (parseInt(dateParts[0]) > 12) {
-                // yy/mm/dd
-                year = parseInt(dateParts[0]);
-                month = parseInt(dateParts[1]) - 1;
-                day = parseInt(dateParts[2]);
-            } else {
-                // dd/mm/yy
-                day = parseInt(dateParts[0]);
-                month = parseInt(dateParts[1]) - 1;
-                year = parseInt(dateParts[2]);
-            }
+            // DD.MM.YY
+            day = parseInt(dateParts[0]);
+            month = parseInt(dateParts[1]) - 1;
+            year = parseInt(dateParts[2]);
         }
-    } else if (platform === 'telegram') {
-        day = parseInt(dateParts[0]);
-        month = parseInt(dateParts[1]) - 1;
-        year = parseInt(dateParts[2]);
     }
     if (year < 100) {
         year += 2000;

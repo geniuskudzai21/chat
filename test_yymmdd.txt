@@ -1,6 +1,0 @@
-24/05/23, 10:30 - User1: Hello, how are you?
-24/05/24, 11:00 - User2: I'm good, thanks! How about you?
-24/05/25, 11:15 - User1: Great! Let's meet tomorrow.
-24/05/26, 12:00 - User2: Sure, what time?
-24/05/27, 12:30 - User1: How about 2 PM?
-24/05/28, 13:00 - User2: Perfect!
