@@ -10,7 +10,7 @@ const endDate = document.getElementById('endDate');
 const resultsSection = document.getElementById('results');
 
 let chatData = null;
-let currentCharts = [];
+let currentCharts = [];//
 let individualChart = null;
 let userDaysChart = null;
 
