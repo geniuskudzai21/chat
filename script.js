@@ -62,7 +62,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Functions
 function handleFileSelect(file) {
-    if (file.type !== 'text/plain' && !file.name.endsWith('.txt')) {
+    // Allow files that either have a text MIME type or a .txt extension (case-insensitive).
+    const lowerName = (file.name || '').toLowerCase();
+    if (!(file.type && file.type.startsWith('text')) && !lowerName.endsWith('.txt')) {
         alert('Please upload a text file (.txt)');
         return;
     }
@@ -114,10 +116,11 @@ function parseChat(content, platform) {
     let currentDate = null;
 
     const patterns = {
-        whatsapp: /^(\d{1,2}\/\d{1,2}\/\d{2,4}),? (\d{1,2}:\d{2}) - ([^:]+): (.+)$/,
-        whatsapp2: /^\[(\d{1,2}\/\d{1,2}\/\d{2,4}),? (\d{1,2}:\d{2}:\d{2})\] ([^:]+): (.+)$/,
-        telegram: /^(\d{1,2}\.\d{1,2}\.\d{2,4}),? (\d{1,2}:\d{2}) - ([^:]+): (.+)$/,
-        facebook: /^(\d{1,2}\/\d{1,2}\/\d{2,4}),? (\d{1,2}:\d{2}) - ([^:]+): (.+)$/
+        // Broadened patterns to accept YYYY/MM/DD, DD/MM/YYYY, MM/DD/YY and allow '/', '-', '.' separators
+        whatsapp: /^(\d{1,4}[\/\.\-]\d{1,2}[\/\.\-]\d{1,4}),? (\d{1,2}:\d{2}(?::\d{2})?) - ([^:]+): (.+)$/,
+        whatsapp2: /^\[(\d{1,4}[\/\.\-]\d{1,2}[\/\.\-]\d{1,4}),? (\d{1,2}:\d{2}(?::\d{2})?)\] ([^:]+): (.+)$/,
+        telegram: /^(\d{1,4}[\/\.\-]\d{1,2}[\/\.\-]\d{1,4}),? (\d{1,2}:\d{2}(?::\d{2})?) - ([^:]+): (.+)$/,
+        facebook: /^(\d{1,4}[\/\.\-]\d{1,2}[\/\.\-]\d{1,4}),? (\d{1,2}:\d{2}(?::\d{2})?) - ([^:]+): (.+)$/
     };
     
     for (let i = 0; i < lines.length; i++) {
@@ -126,8 +129,10 @@ function parseChat(content, platform) {
         
     let match = null;
     if (platform === 'whatsapp') {
-        const systemMatch = line.match(/^(\d{1,2}\/\d{1,2}\/\d{2,4}),? (\d{1,2}:\d{2}) - (.+)$/);
+        // Detect system messages (no sender) using the broader date pattern
+        const systemMatch = line.match(/^(\d{1,4}[\/\.\-]\d{1,2}[\/\.\-]\d{1,4}),? (\d{1,2}:\d{2}(?::\d{2})?) - (.+)$/);
         if (systemMatch && !systemMatch[3].includes(':')) {
+            // This is a system message without a sender, skip
             continue;
         }
         match = line.match(patterns.whatsapp) || line.match(patterns.whatsapp2);
@@ -164,75 +169,91 @@ function parseChat(content, platform) {
 }
 
 function parseDateTime(dateStr, timeStr, platform) {
-    let dateParts, timeParts;
-
-    if (platform === 'whatsapp') {
-        // Handles different date formats
-        if (dateStr.includes('/')) {
-            dateParts = dateStr.split('/');
-        } else if (dateStr.includes('-')) {
-            dateParts = dateStr.split('-');
-        }
-        timeParts = timeStr.split(':');
-    } else if (platform === 'telegram') {
-        dateParts = dateStr.split('.');
-        timeParts = timeStr.split(':');
-    } else if (platform === 'facebook') {
-        dateParts = dateStr.split('/');
-        timeParts = timeStr.split(':');
+    // Normalise separators and trim
+    dateStr = dateStr.replace(/-/g, '/').trim();
+    // Some exports use dots for telegram
+    if (platform === 'telegram') {
+        dateStr = dateStr.replace(/\./g, '/');
     }
 
-    let day, month, year;
+    const dateParts = dateStr.split('/').map(p => p.trim());
+    const timeParts = timeStr.trim().split(':').map(p => p.trim());
 
-    if (platform === 'whatsapp' || platform === 'facebook') {
-        // Check for yy/mm/dd format (first part >=20, all 2 digits)
-        if (dateParts.length === 3 &&
-            dateParts[0].length === 2 &&
-            dateParts[1].length === 2 &&
-            dateParts[2].length === 2 &&
-            parseInt(dateParts[0]) >= 20) {
-            // yy/mm/dd
-            year = parseInt(dateParts[0]);
-            month = parseInt(dateParts[1]) - 1;
-            day = parseInt(dateParts[2]);
-        } else {
-            // Existing logic for other formats
-            if (dateParts[0].length === 4) {
-                // YYYY/MM/DD
-                year = parseInt(dateParts[0]);
-                month = parseInt(dateParts[1]) - 1;
-                day = parseInt(dateParts[2]);
-            } else if (parseInt(dateParts[0]) > 12) {
-                // MM/DD/YY
-                day = parseInt(dateParts[1]);
-                month = parseInt(dateParts[0]) - 1;
-                year = parseInt(dateParts[2]);
+    let day = 1, month = 0, year = new Date().getFullYear();
+
+    if (dateParts.length === 3) {
+        const p0 = dateParts[0];
+        const p1 = dateParts[1];
+        const p2 = dateParts[2];
+
+        // If any part looks like a 4-digit year, use it
+        if (p0.length === 4) {
+            year = parseInt(p0, 10);
+            month = parseInt(p1, 10) - 1;
+            day = parseInt(p2, 10);
+        } else if (p2.length === 4) {
+            year = parseInt(p2, 10);
+            // Assume common exported formats: DD/MM/YYYY or MM/DD/YYYY
+            const first = parseInt(p0, 10);
+            const second = parseInt(p1, 10);
+
+            // If first > 12 it's definitely DD/MM/YYYY
+            if (first > 12) {
+                day = first;
+                month = second - 1;
+            } else if (second > 12) {
+                // If second > 12 then MM/DD/YYYY (rare), swap
+                month = first - 1;
+                day = second;
             } else {
+                // Ambiguous -> assume DD/MM/YYYY (common for WhatsApp)
+                day = first;
+                month = second - 1;
+            }
+        } else {
+            // Two-digit year (YY) or missing year -> assume DD/MM/YY or MM/DD/YY
+            let yy = parseInt(p2, 10);
+            if (!isNaN(yy)) {
+                year = yy < 100 ? 2000 + yy : yy;
+            }
+
+            const first = parseInt(p0, 10);
+            const second = parseInt(p1, 10);
+
+            if (first > 12) {
                 // DD/MM/YY
-                day = parseInt(dateParts[0]);
-                month = parseInt(dateParts[1]) - 1;
-                year = parseInt(dateParts[2]);
+                day = first;
+                month = second - 1;
+            } else if (second > 12) {
+                // MM/DD/YY (rare)
+                month = first - 1;
+                day = second;
+            } else {
+                // Ambiguous -> prefer DD/MM/YY
+                day = first;
+                month = second - 1;
             }
         }
-    } else if (platform === 'telegram') {
-        if (dateParts[0].length === 4) {
-            // YYYY.MM.DD
-            year = parseInt(dateParts[0]);
-            month = parseInt(dateParts[1]) - 1;
-            day = parseInt(dateParts[2]);
-        } else {
-            // DD.MM.YY
-            day = parseInt(dateParts[0]);
-            month = parseInt(dateParts[1]) - 1;
-            year = parseInt(dateParts[2]);
-        }
     }
-    if (year < 100) {
-        year += 2000;
+
+    // Normalize time parts and support AM/PM if present
+    let hours = 0, minutes = 0, seconds = 0;
+    if (timeParts.length >= 1) hours = parseInt(timeParts[0], 10) || 0;
+    if (timeParts.length >= 2) minutes = parseInt(timeParts[1], 10) || 0;
+    if (timeParts.length >= 3) seconds = parseInt(timeParts[2], 10) || 0;
+
+    // If timeStr contains am/pm, adjust hours
+    const ampmMatch = timeStr.match(/(am|pm)/i);
+    if (ampmMatch) {
+        const isPm = /pm/i.test(ampmMatch[0]);
+        if (isPm && hours < 12) hours += 12;
+        if (!isPm && hours === 12) hours = 0;
     }
-    const hours = parseInt(timeParts[0]);
-    const minutes = parseInt(timeParts[1]);
-    const seconds = timeParts.length > 2 ? parseInt(timeParts[2]) : 0;
+
+    // Safety checks
+    if (year < 100) year += 2000;
+    if (month < 0) month = 0;
+    if (day < 1) day = 1;
 
     return new Date(year, month, day, hours, minutes, seconds);
 }
