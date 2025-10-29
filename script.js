@@ -1150,10 +1150,9 @@ function classifyChemistry(analysis) {
     const avgResponseTime = totalResponseTime / userCount;
     avgMessagesPerUser = totalMessages / userCount;
 
-    // Define chemistry labels based on metrics, now including positive words
+    // Define chemistry labels based on metrics, now including positive wordss
     const chemistryLabels = [
         {
-    
             emoji: '💞',
             label: '"Romantic Spark"',
             description: 'Flirty or affectionate, moderate consistency',
