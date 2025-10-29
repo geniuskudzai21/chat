@@ -127,17 +127,7 @@ function parseChat(content, platform) {
     let match = null;
     if (platform === 'whatsapp') {
         const systemMatch = line.match(/^(\d{1,2}\/\d{1,2}\/\d{2,4}),? (\d{1,2}:\d{2}) - (.+)$/);
-        if (systemMatch) {
-            let dateStr, timeStr, text;
-            [, dateStr, timeStr, text] = systemMatch;
-            const dateTime = parseDateTime(dateStr, timeStr, platform);
-            messages.push({
-                date: dateTime,
-                sender: 'System',
-                message: text.trim(),
-                timestamp: dateTime.getTime()
-            });
-            currentDate = dateTime;
+        if (systemMatch && !systemMatch[3].includes(':')) {
             continue;
         }
         match = line.match(patterns.whatsapp) || line.match(patterns.whatsapp2);

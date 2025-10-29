@@ -11,7 +11,7 @@
 }
 .card {
     transition: all 0.3s ease;
-    box-shadow: 0 0 10px rgba(0, 0, 255, 0.3);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
     background: linear-gradient(135deg, var(--light), var(--secondary));
     color: var(--accent);
 }
@@ -23,7 +23,7 @@
 .chart-container {
     position: relative;
     height: 300px;
-    width: 100%;
+
 }
 .word-cloud, .emoji-cloud {
     display: flex;
