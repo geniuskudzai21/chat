@@ -1,0 +1,3 @@
+- [x] Modify parseDateTime function in script.js to detect and parse yy/mm/dd format for WhatsApp and Facebook platforms
+- [x] Ensure backward compatibility with existing dd/mm/yy format
+- [x] Verify the changes work correctly
